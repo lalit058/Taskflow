@@ -109,7 +109,7 @@ const LoginForm = ({ isLogin, setIsLogin, formData, setFormData, handleSubmit, e
                         </div>
                     )}
 
-                    <div className="flex justify-center w-full mt-4"> {/* Centering container */}
+                    <div className="flex justify-center w-full mt-4"> 
                         <button
                             type="submit"
                             disabled={loading}
