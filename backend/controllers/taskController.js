@@ -3,7 +3,7 @@ exports.getAllTasks = async (req, res) => {
     let query = {};
 
     console.log("User Role:", req.user.role);
-    // If NOT admin, filter by the logged-in user's ID
+    // If not admin, filter by the logged-in user's ID
     if (req.user.role !== 'admin') {
       query.user = req.user._id; 
     }
