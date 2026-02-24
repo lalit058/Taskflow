@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
-import { Check, X, Loader2 } from 'lucide-react'; // Added Loader2 for a spinner
+import { Check, X, Loader2 } from 'lucide-react'; 
 import toast from 'react-hot-toast';
 
 const TaskForm = ({ task, onSubmit, onCancel, isSubmitting }) => {
   const formatForInput = (dateInput) => {
     if (!dateInput) return '';
 
-    // Handle if date is wrapped in MongoDB's {$date: ...}
     let dateValue = dateInput?.$date ? dateInput.$date : dateInput;
 
     // If it's a timestamp string, turn it into a number
@@ -18,7 +17,7 @@ const TaskForm = ({ task, onSubmit, onCancel, isSubmitting }) => {
 
     if (isNaN(date.getTime())) return '';
 
-    // Returns exactly "yyyy-MM-dd"
+    // Returns "yyyy-MM-dd"
     return date.toISOString().split('T')[0];
   };
 
@@ -27,7 +26,7 @@ const TaskForm = ({ task, onSubmit, onCancel, isSubmitting }) => {
     description: task?.description || '',
     status: task?.status || 'pending',
     priority: task?.priority || 'medium',
-    dueDate: formatForInput(task?.dueDate) // Clean the date here
+    dueDate: formatForInput(task?.dueDate)
   });
 
   const handleSubmit = (e) => {
@@ -56,7 +55,7 @@ const TaskForm = ({ task, onSubmit, onCancel, isSubmitting }) => {
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               className="w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none transition-all disabled:bg-gray-50 disabled:text-gray-400"
-              disabled={isSubmitting} // Disable during submit
+              disabled={isSubmitting} 
             />
           </div>
 
