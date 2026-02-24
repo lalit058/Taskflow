@@ -14,7 +14,7 @@ const TaskCard = ({ task, onDelete, onEdit, onToggleComplete, isDeleting }) => {
     high: 'bg-red-100 text-red-800'
   };
 
-  // Improved helper to format the date safely
+  // helper to format the date 
   const formatDate = (dateInput) => {
     if (!dateInput) return null;
 
