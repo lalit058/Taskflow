@@ -46,7 +46,6 @@ const Dashboard = ({ user, token, onLogout }) => {
 
             // Listen for updates from the server
             socket.on('taskUpdate', (data) => {
-                // Show notification
                 toast.success(data.message, { icon: '🔔' });
                 refetch();
             });
@@ -69,7 +68,6 @@ const Dashboard = ({ user, token, onLogout }) => {
         const getSortTime = (dateInput) => {
             if (!dateInput) return Infinity;
 
-            // Extract value 
             let val = dateInput?.$date ? dateInput.$date : dateInput;
 
             // Handle strings that are actually numeric timestamps 
@@ -167,7 +165,6 @@ const Dashboard = ({ user, token, onLogout }) => {
         if (!id) return;
 
         toast((t) => (
-            /* We wrap the content in a div that explicitly allows clicks */
             <div style={{ pointerEvents: 'auto', backgroundColor:'#7f7f7f', display: 'flex', flexDirection: 'column', gap: '10px', border: '1px solid #7f7f7f' }}>
                 <span style={{ display: 'block' }}>Are you sure you want to delete this task?</span>
                 <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
