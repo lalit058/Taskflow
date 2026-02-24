@@ -23,12 +23,12 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Set io on the app instance for potential REST route access
+// Set io for potential REST route access
 app.set('io', io);
 
 const PORT = process.env.PORT || 5000;
 
-// --- APOLLO SERVER SETUP ---
+// Apollo server setup
 const startApolloServer = async () => {
   try {
     const { ApolloServer } = await import('@apollo/server');
@@ -46,7 +46,7 @@ const startApolloServer = async () => {
 
     await apolloServer.start();
 
-    // 3. Apply GraphQL Middleware with UPDATED CONTEXT
+    // Apply GraphQL Middleware with updated context
     app.use(
       '/graphql',
       cors(),
@@ -73,7 +73,7 @@ const startApolloServer = async () => {
           // Return the context object used by Resolvers
           return {
             user: currentUser,
-            io: io // <--- Passing the Socket.io instance to all resolvers
+            io: io 
           };
         },
       })
@@ -93,7 +93,7 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Server is running' });
 });
 
-// Socket.io connection logic
+// Socket.io logic
 io.on('connection', (socket) => {
 
   // Join a private room based on User ID for targeted notifications
@@ -102,11 +102,9 @@ io.on('connection', (socket) => {
 
     if (!userId) return;
     socket.join(userId.toString());
-    console.log(`User ${userId} joined private room`);
 
     if (role === 'admin') {
       socket.join('admin-room');
-      console.log(`Admin ${userId} joined the admin-room`);
     }
   });
 
