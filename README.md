@@ -35,6 +35,38 @@ Make sure you have the following installed on your machine:
 git clone git@github.com:lalit058/Taskflow.git
 cd taskflow
 ```
+### 2. Configure Environment Variables
+set up DB connection and server port
+
+create a .env file inside the server/directory:
+```bash
+PORT=5000
+MONGO_URI=mongodb://localhost:27017/taskflow
+NODE_ENV=development
+```
+### 3. Install Dependencies
+Run for both client and server
+```bash
+# Install server dependencies
+cd backend
+npm install
+
+# Install client dependencies
+cd frontend
+npm install
+```
+### 4. Run the Application
+```bash 
+# Start the backend server:
+cd Backend
+node server.js
+
+# start the frontend in a seperate terminal
+cd Frontend
+npm run dev
+
+Open your browser and navigate to http://localhost:5173 (or http://localhost:3000).
+```
 
 1. Clone the repo: `git clone https://github.com/lalit058/Taskflow.git`
 2. Install dependencies for both folders: `npm install`
