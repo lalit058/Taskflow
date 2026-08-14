@@ -1,8 +1,8 @@
 export const register = async (req, res) => {
-    onsole.log("Data received from frontend:", req.body);
+    console.log("Data received from frontend:", req.body);
     try {
         // Get role from req.body 
-        const { name, email, password, role } = req.body;
+        const { name, email, password, role, avatar } = req.body;
 
         // Check if user exists
         const userExists = await User.findOne({ email });
@@ -13,7 +13,8 @@ export const register = async (req, res) => {
             name,
             email,
             password,
-            role: role || 'user'
+            role: role || 'user',
+            avatar: avatar || ''   // Save Base64 avatar string or empty string default
         });
 
         const generateToken = (id, role) => {
@@ -27,7 +28,7 @@ export const register = async (req, res) => {
 
         res.status(201).json({
             token,
-            user: { id: user._id, name: user.name, email: user.email, role: user.role }
+            user: { id: user._id, name: user.name, email: user.email, role: user.role, avatar: user.avatar }
         });
     } catch (error) {
         res.status(500).json({ message: error.message });

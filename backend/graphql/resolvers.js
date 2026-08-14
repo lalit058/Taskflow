@@ -1,24 +1,72 @@
 const Task = require('../models/Task');
 const User = require('../models/User');
 
+// Helper to safely extract user ID regardless of property naming
+const getUserId = (user) => {
+  if (!user) return null;
+  return user.id || user.userId || user._id;
+};
+
+// Helper to format user payload safely for GraphQL
+const formatTaskUser = (task) => {
+  const taskObj = task.toObject ? task.toObject() : task;
+  if (!taskObj.user) {
+    taskObj.user = null; // Clean fallback for deleted users
+  } else {
+    taskObj.user.id = taskObj.user._id.toString();
+  }
+  return taskObj;
+};
+
 const resolvers = {
   Query: {
     getTasks: async (_, { status }, context) => {
-
       if (!context.user) throw new Error('You must be logged in to view tasks.');
 
-      let filter = {};
-      if (context.user.role !== 'admin') {
-        filter.user = context.user.id;
+      const userId = getUserId(context.user);
+
+      // If user ID is missing/undefined, throw error instead of running an unfiltered query
+      if (!userId && context.user.role !== 'admin') {
+        throw new Error('Invalid user session. Please re-authenticate.');
       }
-      return await Task.find(filter).sort({ createdAt: -1 }).populate('user');
+
+      let filter = {};
+
+      // Regular Users: ONLY filter by their user ID
+      // Admin: filter object remains empty, fetching ALL tasks
+      if (context.user.role !== 'admin') {
+        filter.user = userId;
+      }
+
+      if (status) {
+        filter.status = status;
+      }
+
+      const tasks = await Task.find(filter)
+        .sort({ createdAt: -1 })
+        .populate({ path: 'user', select: '_id name email role avatar' });
+
+      return tasks.map(formatTaskUser);
     },
 
+    getTask: async (_, { id }, context) => {
+      if (!context.user) throw new Error('Unauthorized');
+
+      const task = await Task.findById(id).populate({
+        path: 'user',
+        select: '_id name email role avatar'
+      });
+
+      if (!task) throw new Error('Task not found');
+      return formatTaskUser(task);
+    }
   },
 
   Mutation: {
     createTask: async (_, { title, description, priority, status, dueDate }, context) => {
       if (!context.user) throw new Error('Unauthorized');
+
+      const userId = getUserId(context.user);
 
       const newTask = new Task({
         title,
@@ -26,36 +74,46 @@ const resolvers = {
         priority: priority || 'medium',
         status: status || 'pending',
         dueDate: dueDate,
-        user: context.user.id
+        user: userId
       });
+
       const savedTask = await newTask.save();
-      const populatedTask = await savedTask.populate('user');
+      const populatedTask = await savedTask.populate({
+        path: 'user',
+        select: '_id name email role avatar'
+      });
+
+      const formattedTask = formatTaskUser(populatedTask);
 
       // Real-time trigger 
       if (context.io) {
         if (context.user.role === 'admin') {
-          context.io.to(populatedTask.user._id.toString()).emit('taskUpdate', {
-            message: `Admin assigned a new task to you: ${title}`,
-            action: 'created'
-          });
+          if (formattedTask.user) {
+            context.io.to(formattedTask.user.id).emit('taskUpdate', {
+              message: `Admin assigned a new task to you: ${title}`,
+              action: 'created'
+            });
+          }
         } else {
+          const userName = formattedTask.user ? formattedTask.user.name : 'A user';
           context.io.to('admin-room').emit('taskUpdate', {
-            message: `${populatedTask.user.name} created a new task: ${title}`,
+            message: `${userName} created a new task: ${title}`,
             action: 'created'
           });
         }
       }
 
-      return populatedTask;
+      return formattedTask;
     },
 
     updateTask: async (_, { id, title, description, status, priority, dueDate }, context) => {
       if (!context.user) throw new Error('Unauthorized');
 
+      const userId = getUserId(context.user);
       const task = await Task.findById(id);
       if (!task) throw new Error('Task not found');
 
-      if (context.user.role !== 'admin' && task.user.toString() !== context.user.id) {
+      if (context.user.role !== 'admin' && task.user?.toString() !== userId.toString()) {
         throw new Error('You can only update your own tasks');
       }
 
@@ -67,59 +125,74 @@ const resolvers = {
       if (dueDate !== undefined) task.dueDate = dueDate;
 
       await task.save();
-      const updatedTask = await task.populate('user');
+      const updatedTask = await task.populate({
+        path: 'user',
+        select: '_id name email role avatar'
+      });
+
+      const formattedTask = formatTaskUser(updatedTask);
 
       if (context.io) {
         if (context.user.role === 'admin') {
-          // Check: Only send if the Admin is NOT the owner of the task
-          if (updatedTask.user._id.toString() !== context.user.id.toString()) {
-            context.io.to(updatedTask.user._id.toString()).emit('taskUpdate', {
-              message: `Admin updated your task: ${updatedTask.title}`,
+          // Only send if the Admin is NOT the owner of the task and target user exists
+          if (formattedTask.user && formattedTask.user.id !== userId.toString()) {
+            context.io.to(formattedTask.user.id).emit('taskUpdate', {
+              message: `Admin updated your task: ${formattedTask.title}`,
               action: 'updated'
             });
           }
         } else {
+          const userName = formattedTask.user ? formattedTask.user.name : 'A user';
           context.io.to('admin-room').emit('taskUpdate', {
-            message: `${updatedTask.user.name} updated task: ${updatedTask.title}`,
+            message: `${userName} updated task: ${formattedTask.title}`,
             action: 'updated'
           });
         }
       }
 
-      return updatedTask;
+      return formattedTask;
     },
 
     deleteTask: async (_, { id }, context) => {
       if (!context.user) throw new Error('Unauthorized');
 
-      const task = await Task.findById(id);
+      const userId = getUserId(context.user);
+      const task = await Task.findById(id).populate({
+        path: 'user',
+        select: '_id name email role avatar'
+      });
+
       if (!task) throw new Error('Task not found');
 
-      // Only admin or owner can delete
-      if (context.user.role !== 'admin' && task.user.toString() !== context.user.id) {
+      // Check permissions safely
+      const taskOwnerId = task.user ? (task.user._id || task.user).toString() : null;
+      if (context.user.role !== 'admin' && taskOwnerId !== userId.toString()) {
         throw new Error('You can only delete your own tasks');
       }
 
-      const updateTask = await User.findById(context.user.id);
-      const Performer = updateTask ? updateTask.name : "A user";
+      const performerUser = await User.findById(userId);
+      const performerName = performerUser ? performerUser.name : 'A user';
 
       await Task.findByIdAndDelete(id);
 
       if (context.io) {
         if (context.user.role === 'admin') {
-          // Notifies the specific user
-          context.io.to(task.user._id.toString()).emit('taskUpdate', {
-            message: `Admin deleted your task: ${task.title}`,
-            action: 'deleted'
-          });
+          // Safe navigation check using taskOwnerId
+          if (taskOwnerId) {
+            context.io.to(taskOwnerId).emit('taskUpdate', {
+              message: `Admin deleted your task: ${task.title}`,
+              action: 'deleted'
+            });
+          }
         } else {
           context.io.to('admin-room').emit('taskUpdate', {
-            message: `${Performer} deleted task: ${task.title}`,
+            message: `${performerName} deleted task: ${task.title}`,
             action: 'deleted'
           });
         }
       }
-      return task;
+
+      return formatTaskUser(task);
     }
   }
 };

@@ -8,12 +8,29 @@ const LoginForm = ({ isLogin, setIsLogin, formData, setFormData, handleSubmit, e
                 setError("");
             }, 3000);
 
-
             return () => {
                 clearTimeout(timer);
             };
         }
     }, [error, setError]);
+
+    //convert uploaded image file to Base64 string
+    const handleImageChange =(e) => {
+        const file = e.target.files[0];
+        if(!file) return;
+
+        //Ensure file is less than 5MB
+        if (file.size > 5 * 1024 * 1024) {
+            setError("Image size must be less than 5MB");
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setFormData({ ...formData, avatar: reader.result });
+        };
+        reader.readAsDataURL(file);
+    };
 
 
     // Enter key to submit the form
@@ -45,6 +62,26 @@ const LoginForm = ({ isLogin, setIsLogin, formData, setFormData, handleSubmit, e
                 <form onSubmit={onSubmit} className="space-y-4">
                     {!isLogin && (
                         <>
+                            {/* Profile Avatar Upload */}
+                            <div className="flex items-center space-x-4 p-2 bg-gray-50 rounded-xl border border-gray-100">
+                                <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 flex-shrink-0 flex items-center justify-center border border-gray-300">
+                                    {formData.avatar ? (
+                                        <img src={formData.avatar} alt="Avatar preview" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <span className="text-gray-400 text-xs text-center font-bold">Photo</span>
+                                    )}
+                                </div>
+                                <div className="flex-1">
+                                    <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Profile Photo (Optional)</label>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleImageChange}
+                                        className="text-xs text-gray-500 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
+                                    />
+                                </div>
+                            </div>
+
                             <div>
                                 <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Full Name</label>
                                 <input
@@ -64,7 +101,7 @@ const LoginForm = ({ isLogin, setIsLogin, formData, setFormData, handleSubmit, e
                                     value={formData.role || 'user'}
                                     onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                                 >
-                                    <option value="user">Standard User</option>
+                                    <option value="user">User</option>
                                     <option value="admin">Administrator</option>
                                 </select>
                             </div>

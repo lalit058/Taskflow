@@ -6,6 +6,9 @@ const typeDefs = gql`
     name: String!
     email: String!
     role: String!
+    avatar: String!
+    createdAt: String!
+    updatedAt: String!
   }
 
   type Task {
@@ -15,23 +18,40 @@ const typeDefs = gql`
     status: String!
     priority: String!
     dueDate: String
-    user: User!
+    user: User  # Removed '!' to allow null/fallback if a user was deleted
     createdAt: String
+    updatedAt: String
   }
 
   type Query {
     # Fetch tasks 
-    getTasks(status: String): [Task]
+    getTasks(status: String): [Task!]!
     # Get a single task by ID
     getTask(id: ID!): Task
   }
 
   type Mutation {
     # Mutation to create a task
-    createTask(title: String!, description: String, priority: String, status: String, dueDate: String): Task
-    # Mutation to update status
-    updateTask(id: ID!, title:String, description: String, status: String, priority: String, dueDate: String ): Task
-    deleteTask(id: ID!): Task
+    createTask(
+      title: String!
+      description: String
+      priority: String
+      status: String
+      dueDate: String
+    ): Task!
+
+    # Mutation to update task
+    updateTask(
+      id: ID!
+      title: String
+      description: String
+      status: String
+      priority: String
+      dueDate: String
+    ): Task!
+
+    # Mutation to delete task
+    deleteTask(id: ID!): Task!
   }
 `;
 

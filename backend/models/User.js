@@ -23,6 +23,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum: ['user', 'admin'],
     default: 'user'
+  },
+  avatar: {
+    type: String,
+    default: ''
   }
 }, { timestamps: true });
 
@@ -30,7 +34,7 @@ userSchema.pre('save', async function() {
   if (!this.isModified('password')) return;
 
   //hash the password
-  this.password = bcrypt.hash(this.password, 12);
+  this.password = await bcrypt.hash(this.password, 12);
 });
 
 userSchema.methods.comparePassword = async function(candidatePassword) {

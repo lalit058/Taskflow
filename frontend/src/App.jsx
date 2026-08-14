@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import LoginForm from './components/LoginForm';
+import Navbar from './components/Navbar';
 import Dashboard from './components/Dashboard';
 
 // API Service 
@@ -32,8 +33,10 @@ const AuthForm = ({ onLogin }) => {
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'user'
+    role: 'user',
+    avatar: ''
   });
+
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -56,7 +59,8 @@ const AuthForm = ({ onLogin }) => {
           name: formData.name,
           email: formData.email,
           password: formData.password,
-          role: formData.role
+          role: formData.role,
+          avatar: formData.avatar
         });
       }
 
@@ -113,6 +117,7 @@ export default function App() {
       user={user}
       token={token}
       onLogout={handleLogout}
+      onUpdateUser={setUser}
     />
   );
 }
