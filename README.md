@@ -32,7 +32,7 @@ Make sure you have the following installed on your machine:
 
 #### 1. Clone the Repository
 ```bash
-git clone https://github.com/your-username/taskflow.git
+git clone git@github.com:lalit058/Taskflow.git
 cd taskflow
 ```
 
