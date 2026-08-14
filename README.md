@@ -2,11 +2,6 @@
 
 A modern, full-stack task management application built with react, Node.js, Express, and MongoDB. Organize, track, and prioritize your daily tasks with real-time status updates and dynamic urgency alerts.
 
-<!-- HERO PREVIEW SCREENSHOT -->
-<p align="center">
-  <img src="./assets/dashboard-hero.png" alt="Taskflow Dashboard Overview" width="100%" style="border-radius: 8px;">
-</p>
-
 ---
 
 ## 🖼️ System Preview
