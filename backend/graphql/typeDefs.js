@@ -6,7 +6,7 @@ const typeDefs = gql`
     name: String!
     email: String!
     role: String!
-    avatar: String!
+    avatar: String
     createdAt: String!
     updatedAt: String!
   }
@@ -18,7 +18,7 @@ const typeDefs = gql`
     status: String!
     priority: String!
     dueDate: String
-    user: User  # Removed '!' to allow null/fallback if a user was deleted
+    user: User  
     createdAt: String
     updatedAt: String
   }
@@ -31,6 +31,12 @@ const typeDefs = gql`
   }
 
   type Mutation {
+  updateProfile(
+      name: String
+      email: String
+      avatar: String
+    ): User!
+
     # Mutation to create a task
     createTask(
       title: String!

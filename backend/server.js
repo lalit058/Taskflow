@@ -10,18 +10,29 @@ require('dotenv').config();
 
 const app = express();
 const server = http.createServer(app);
+
+const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+
+const corsOptions = {
+  origin: [clientUrl, 'http://127.0.0.1:5173'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+};
+
+// CORS Middleware
+app.use(cors(corsOptions));
+
+// Body Parsers with 10MB limit 
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
+
+// Socket.IO Setup
 const io = socketIO(server, {
-  cors: {
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
-    methods: ['GET', 'POST']
-  }
+  cors: corsOptions,
 });
 
 connectDB();
-
-// Increased limits to 10mb for Base64 image payloads in REST routes
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // Set io for potential REST route access
 app.set('io', io);
@@ -46,11 +57,11 @@ const startApolloServer = async () => {
 
     await apolloServer.start();
 
-    // Apply GraphQL Middleware with updated context
+    // GraphQL Route with 10MB JSON limit 
     app.use(
       '/graphql',
-      cors(),
-      express.json(),
+      cors(corsOptions),
+      express.json({ limit: '10mb' }),
       expressMiddleware(apolloServer, {
         context: async ({ req }) => {
           const authHeader = req.headers.authorization || '';
@@ -63,17 +74,16 @@ const startApolloServer = async () => {
               const decoded = jwt.verify(token, process.env.JWT_SECRET);
               currentUser = {
                 id: decoded.userId,
-                role: decoded.role
+                role: decoded.role,
               };
             } catch (err) {
               console.error('JWT Verification Error:', err.message);
             }
           }
 
-          // Return the context object used by Resolvers
           return {
             user: currentUser,
-            io: io 
+            io: io,
           };
         },
       })
@@ -95,8 +105,6 @@ app.get('/api/health', (req, res) => {
 
 // Socket.io logic
 io.on('connection', (socket) => {
-
-  // Join a private room based on User ID for targeted notifications
   socket.on('join', (data) => {
     const { userId, role } = data;
 

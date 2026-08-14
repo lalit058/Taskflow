@@ -7,7 +7,8 @@ const auth = require('../middleware/auth');
 // Register new user
 router.post('/register', async (req, res) => {
     try {
-        const { name, email, password, role } = req.body;
+        // Extract avatar alongside other fields
+        const { name, email, password, role, avatar } = req.body;
 
         if (!name || !email || !password || !role) {
             return res.status(400).json({ error: 'All fields are required' });
@@ -18,11 +19,13 @@ router.post('/register', async (req, res) => {
             return res.status(400).json({ error: 'Email already registered' });
         }
 
+        // Save avatar to MongoDB document
         const user = new User({
             name,
             email,
             password,
-            role: role || 'user'
+            role: role || 'user',
+            avatar: avatar || '' 
         });
 
         await user.save();
@@ -36,10 +39,17 @@ router.post('/register', async (req, res) => {
             { expiresIn: '7d' }
         );
 
+        // Include avatar in response
         res.status(201).json({
             message: 'User registered successfully',
             token,
-            user: { id: user._id, name: user.name, email: user.email, role: user.role }
+            user: { 
+                id: user._id, 
+                name: user.name, 
+                email: user.email, 
+                role: user.role,
+                avatar: user.avatar 
+            }
         });
     } catch (error) {
         res.status(500).json({
@@ -79,11 +89,18 @@ router.post('/login', async (req, res) => {
 
         res.json({
             token,
-            user: { id: user._id, name: user.name, email: user.email, role: user.role }
+            user: { 
+                id: user._id, 
+                name: user.name, 
+                email: user.email, 
+                role: user.role,
+                avatar: user.avatar 
+            }
         });
     } catch (error) {
         console.error("Login Error:", error);
         res.status(500).json({ error: 'Login failed due to server error' });
     }
 });
+
 module.exports = router;

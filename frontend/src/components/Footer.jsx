@@ -13,7 +13,7 @@ const Footer = () => {
           <span className="text-xs text-gray-500">v1.0.0</span>
         </div>
 
-        {/* Center: Attribution (Stacked vertically using flex-col) */}
+        {/* Center Attribution */}
         <div className="text-xs text-gray-500 flex flex-col items-center sm:items-start gap-0.5">
           <p>
             Built by{' '}

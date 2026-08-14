@@ -1,5 +1,17 @@
 import { gql } from "@apollo/client";
 
+export const Update_Profile = gql`
+  mutation UpdateProfile($name: String, $email: String, $avatar: String) {
+    updateProfile(name: $name, email: $email, avatar: $avatar) {
+      id
+      name
+      email
+      role
+      avatar
+    }
+  }
+`;
+
 export const Get_Tasks = gql`
   query GetTasks($status: String) {
     getTasks(status: $status) {
@@ -93,7 +105,7 @@ export const Delete_Task = gql`
     deleteTask(id: $id) {
       id
       title
-      User {
+      user {
         id
         name
       }

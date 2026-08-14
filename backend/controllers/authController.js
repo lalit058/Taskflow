@@ -1,7 +1,7 @@
 export const register = async (req, res) => {
     console.log("Data received from frontend:", req.body);
     try {
-        // Get role from req.body 
+        // Get role 
         const { name, email, password, role, avatar } = req.body;
 
         // Check if user exists

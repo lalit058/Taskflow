@@ -20,7 +20,7 @@ import TaskCard from "./TaskCard";
 import TaskForm from "./TaskForm";
 import Navbar from "./Navbar";
 import ProfileModal from "./ProfileModal";
-import Footer from './Footer';
+import Footer from "./Footer";
 
 // Initialize socket
 const socket = io(import.meta.env.VITE_API_URL || "http://localhost:5000");
@@ -74,10 +74,10 @@ const Dashboard = ({ user, token, onLogout, onUpdateUser }) => {
     try {
       const mergedUser = { ...user, ...updatedUser };
 
-      // 1. Update session storage
+      // Update session storage
       sessionStorage.setItem("user", JSON.stringify(mergedUser));
 
-      // 2. Trigger parent App handler to update user state globally
+      // Trigger parent App handler to update user state globally
       if (onUpdateUser) {
         onUpdateUser(mergedUser);
       }
@@ -88,7 +88,7 @@ const Dashboard = ({ user, token, onLogout, onUpdateUser }) => {
     }
   };
 
-  // Stats Calculation (Derived state via useMemo)
+  // Stats Calculation 
   const stats = useMemo(() => {
     return tasks.reduce(
       (acc, task) => {
@@ -98,7 +98,7 @@ const Dashboard = ({ user, token, onLogout, onUpdateUser }) => {
         if (task.status === "completed") acc.completed++;
         return acc;
       },
-      { total: 0, pending: 0, "in-progress": 0, completed: 0 }
+      { total: 0, pending: 0, "in-progress": 0, completed: 0 },
     );
   }, [data?.getTasks]);
 
@@ -253,30 +253,29 @@ const Dashboard = ({ user, token, onLogout, onUpdateUser }) => {
       {
         duration: 5000,
         position: "top-center",
-      }
+      },
     );
   };
 
   const executeDelete = async (id) => {
-    const deletePromise = deleteTask({
-      variables: { id },
-      update: (cache) => {
-        cache.modify({
-          fields: {
-            getTasks(existingTasks = [], { readField }) {
-              return existingTasks.filter(
-                (taskRef) => readField("id", taskRef) !== id
-              );
-            },
-          },
-        });
-      },
-    });
+    if (!id) return;
 
-    toast.promise(deletePromise, {
+    const targetId = typeof id === "object" ? id.id || id._id : id;
+
+    const performDelete = async () => {
+      const response = await deleteTask({
+        variables: { id: targetId },
+        refetchQueries: [{ query: Get_Tasks }],
+      });
+      return response;
+    };
+
+    toast.promise(performDelete(), {
       loading: "Deleting...",
       success: "Task removed successfully!",
-      error: "Could not delete task",
+      error: (err) => (
+        <b>Delete failed: {err?.message || "Could not delete task"}</b>
+      ),
     });
   };
 

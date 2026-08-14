@@ -37,7 +37,6 @@ taskSchema.virtual('isOverdue').get(function() {
   return this.dueDate < new Date();
 });
 
-// Ensure virtuals are included when sending JSON to the frontend
 taskSchema.set('toJSON', { virtuals: true });
 taskSchema.set('toObject', { virtuals: true });
 

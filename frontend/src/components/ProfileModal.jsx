@@ -1,5 +1,15 @@
 import React, { useState } from "react";
-import { X, User, Mail, Shield, Calendar, Edit2, Check, Camera, Trash2 } from "lucide-react";
+import {
+  X,
+  User,
+  Mail,
+  Shield,
+  Calendar,
+  Edit2,
+  Check,
+  Camera,
+  Trash2,
+} from "lucide-react";
 
 const ProfileModal = ({ user, onClose, onUpdateProfile }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -20,13 +30,43 @@ const ProfileModal = ({ user, onClose, onUpdateProfile }) => {
   // Handle local image file selection
   const handleImageChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData((prev) => ({ ...prev, avatar: reader.result }));
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target.result;
+      img.onload = () => {
+        // Resize to max 300x300 for lightweight storage in MongoDB
+        const MAX_WIDTH = 300;
+        const MAX_HEIGHT = 300;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Export compressed base64 JPEG
+        const compressedBase64 = canvas.toDataURL("image/jpeg", 0.7);
+        setFormData((prev) => ({ ...prev, avatar: compressedBase64 }));
       };
-      reader.readAsDataURL(file);
-    }
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleRemovePhoto = () => {
@@ -102,7 +142,9 @@ const ProfileModal = ({ user, onClose, onUpdateProfile }) => {
             {isEditing ? "Edit Profile" : user?.name || "User Profile"}
           </h3>
           <p className="text-sm text-gray-500">
-            {isEditing ? "Update your personal details" : user?.email || "Account details"}
+            {isEditing
+              ? "Update your personal details"
+              : user?.email || "Account details"}
           </p>
         </div>
 
@@ -183,23 +225,33 @@ const ProfileModal = ({ user, onClose, onUpdateProfile }) => {
               <div className="flex items-center gap-3 text-sm">
                 <User size={18} className="text-gray-400 shrink-0" />
                 <div>
-                  <p className="text-xs text-gray-400 font-medium uppercase">Name</p>
-                  <p className="font-medium text-gray-800">{user?.name || "N/A"}</p>
+                  <p className="text-xs text-gray-400 font-medium uppercase">
+                    Name
+                  </p>
+                  <p className="font-medium text-gray-800">
+                    {user?.name || "N/A"}
+                  </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-3 text-sm">
                 <Mail size={18} className="text-gray-400 shrink-0" />
                 <div>
-                  <p className="text-xs text-gray-400 font-medium uppercase">Email</p>
-                  <p className="font-medium text-gray-800">{user?.email || "N/A"}</p>
+                  <p className="text-xs text-gray-400 font-medium uppercase">
+                    Email
+                  </p>
+                  <p className="font-medium text-gray-800">
+                    {user?.email || "N/A"}
+                  </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-3 text-sm">
                 <Shield size={18} className="text-gray-400 shrink-0" />
                 <div>
-                  <p className="text-xs text-gray-400 font-medium uppercase">Role</p>
+                  <p className="text-xs text-gray-400 font-medium uppercase">
+                    Role
+                  </p>
                   <span className="inline-block px-2 py-0.5 text-xs font-semibold bg-blue-50 text-blue-600 rounded-md capitalize">
                     {user?.role || "User"}
                   </span>
@@ -210,7 +262,9 @@ const ProfileModal = ({ user, onClose, onUpdateProfile }) => {
                 <div className="flex items-center gap-3 text-sm">
                   <Calendar size={18} className="text-gray-400 shrink-0" />
                   <div>
-                    <p className="text-xs text-gray-400 font-medium uppercase">Joined</p>
+                    <p className="text-xs text-gray-400 font-medium uppercase">
+                      Joined
+                    </p>
                     <p className="font-medium text-gray-800">
                       {new Date(user.createdAt).toLocaleDateString()}
                     </p>

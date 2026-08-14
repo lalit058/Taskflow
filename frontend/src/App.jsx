@@ -1,54 +1,70 @@
-import React, { useState, useEffect } from 'react';
-import LoginForm from './components/LoginForm';
-import Navbar from './components/Navbar';
-import Dashboard from './components/Dashboard';
+import React, { useState } from "react";
+import { useMutation, gql } from "@apollo/client";
+import LoginForm from "./components/LoginForm";
+import Navbar from "./components/Navbar";
+import Dashboard from "./components/Dashboard";
 
-// API Service 
-const API_URL = 'http://localhost:5000/api';
+// Define GraphQL mutation
+const UPDATE_PROFILE = gql`
+  mutation UpdateProfile($name: String, $email: String, $avatar: String) {
+    updateProfile(name: $name, email: $email, avatar: $avatar) {
+      id
+      name
+      email
+      avatar
+      role
+    }
+  }
+`;
+
+// API Service
+const API_URL = "http://localhost:5000/api";
 
 const api = {
   async register(data) {
     const res = await fetch(`${API_URL}/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
     });
     return res.json();
   },
 
   async login(data) {
     const res = await fetch(`${API_URL}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
     });
     return res.json();
-  }
+  },
 };
 
 const AuthForm = ({ onLogin }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    role: 'user',
-    avatar: ''
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    role: "user",
+    avatar: "",
   });
 
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
     setLoading(true);
-    setError('');
+    setError("");
     try {
       let result;
       if (isLogin) {
-        result = await api.login({ email: formData.email, password: formData.password });
+        result = await api.login({
+          email: formData.email,
+          password: formData.password,
+        });
       } else {
-
         if (!isLogin && formData.password !== formData.confirmPassword) {
           setError("Passwords do not match");
           setLoading(false);
@@ -60,13 +76,13 @@ const AuthForm = ({ onLogin }) => {
           email: formData.email,
           password: formData.password,
           role: formData.role,
-          avatar: formData.avatar
+          avatar: formData.avatar,
         });
       }
 
       if (result && result.token) {
-        sessionStorage.setItem('token', result.token);
-        sessionStorage.setItem('user', JSON.stringify(result.user));
+        sessionStorage.setItem("token", result.token);
+        sessionStorage.setItem("user", JSON.stringify(result.user));
         onLogin(result.token, result.user);
       } else {
         setError(result.error || result.message || "Authentication failed");
@@ -93,8 +109,38 @@ const AuthForm = ({ onLogin }) => {
 };
 
 export default function App() {
-  const [token, setToken] = useState(sessionStorage.getItem('token'));
-  const [user, setUser] = useState(JSON.parse(sessionStorage.getItem('user') || 'null'));
+  const [token, setToken] = useState(sessionStorage.getItem("token"));
+  const [user, setUser] = useState(
+    JSON.parse(sessionStorage.getItem("user") || "null"),
+  );
+
+  // Define the mutation hoook
+  const [updateProfileMutation] = useMutation(UPDATE_PROFILE, {
+    onCompleted: (data) => {
+      // Clean update without logging the huge base64 avatar string
+      const updatedUser = { ...user, ...data.updateProfile };
+      sessionStorage.setItem("user", JSON.stringify(updatedUser));
+      setUser(updatedUser);
+    },
+    onError: (err) => {
+      console.error("❌ Failed to update profile in DB:", err);
+    },
+  });
+
+  // Define the hook 
+  const handleUpdateUser = async (updatedData) => {
+    try {
+      await updateProfileMutation({
+        variables: {
+          name: updatedData.name,
+          email: updatedData.email,
+          avatar: updatedData.avatar,
+        },
+      });
+    } catch (err) {
+      console.error("Mutation Execution Error:", err);
+    }
+  };
 
   const handleLogin = (newToken, newUser) => {
     setToken(newToken);
@@ -102,8 +148,8 @@ export default function App() {
   };
 
   const handleLogout = () => {
-    sessionStorage.removeItem('token');
-    sessionStorage.removeItem('user');
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("user");
     setToken(null);
     setUser(null);
   };
@@ -117,7 +163,7 @@ export default function App() {
       user={user}
       token={token}
       onLogout={handleLogout}
-      onUpdateUser={setUser}
+      onUpdateUser={handleUpdateUser}
     />
   );
 }

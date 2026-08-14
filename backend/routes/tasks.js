@@ -1,18 +1,18 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const Task = require('../models/Task');
 const auth = require('../middleware/auth');
 
-// Get all tasks (Modified for Admin Role)
+// Get all tasks
 router.get('/', auth, async (req, res) => {
   try {
     const { status, priority, sortBy = 'createdAt', order = 'desc' } = req.query;
 
     let filter = {};
 
-    // If user is NOT an admin, only show their own tasks
     if (req.user.role !== 'admin') {
-      filter.user = req.userId;
+      filter.user = req.user._id || req.userId; 
     }
 
     if (status) filter.status = status;
@@ -34,8 +34,11 @@ router.get('/', auth, async (req, res) => {
 router.get('/stats/summary', auth, async (req, res) => {
   try {
     let matchQuery = {};
+
     if (req.user.role !== 'admin') {
-      matchQuery.user = req.user._id;
+      // Cast string ID to mongoose ObjectId for Aggregation framework
+      const userId = req.user._id || req.userId;
+      matchQuery.user = new mongoose.Types.ObjectId(userId);
     }
 
     const stats = await Task.aggregate([
@@ -70,7 +73,7 @@ router.put('/:id', auth, async (req, res) => {
 
     let query = { _id: req.params.id };
     if (req.user.role !== 'admin') {
-      query.user = req.userId;
+      query.user = req.user._id || req.userId;
     }
 
     const task = await Task.findOne(query);
@@ -89,7 +92,7 @@ router.put('/:id', auth, async (req, res) => {
     await task.populate('user', 'name email');
 
     const io = req.app.get('io');
-    io.emit('taskUpdated', task); 
+    if (io) io.emit('taskUpdated', task); 
 
     res.json({ message: 'Task updated successfully', task });
   } catch (error) {
@@ -102,7 +105,7 @@ router.delete('/:id', auth, async (req, res) => {
   try {
     let query = { _id: req.params.id };
     if (req.user.role !== 'admin') {
-      query.user = req.userId;
+      query.user = req.user._id || req.userId;
     }
 
     const task = await Task.findOneAndDelete(query);
@@ -112,7 +115,7 @@ router.delete('/:id', auth, async (req, res) => {
     }
 
     const io = req.app.get('io');
-    io.emit('taskDeleted', req.params.id);
+    if (io) io.emit('taskDeleted', req.params.id);
 
     res.json({ message: 'Task deleted successfully' });
   } catch (error) {
@@ -125,7 +128,7 @@ router.get('/:id', auth, async (req, res) => {
   try {
     let query = { _id: req.params.id };
     if (req.user.role !== 'admin') {
-      query.user = req.userId;
+      query.user = req.user._id || req.userId;
     }
     const task = await Task.findOne(query).populate('user', 'name');
     if (!task) return res.status(404).json({ error: 'Task not found' });
@@ -143,14 +146,14 @@ router.post('/', auth, async (req, res) => {
 
     const task = new Task({
       title, description, status, priority, dueDate,
-      user: req.userId
+      user: req.user._id || req.userId
     });
 
     await task.save();
     await task.populate('user', 'name email');
 
     const io = req.app.get('io');
-    io.emit('taskCreated', task);
+    if (io) io.emit('taskCreated', task);
 
     res.status(201).json({ message: 'Task created successfully', task });
   } catch (error) {
