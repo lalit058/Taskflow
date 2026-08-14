@@ -67,6 +67,15 @@ npm run dev
 
 Open your browser and navigate to http://localhost:5173 (or http://localhost:3000).
 ```
+## 📡 API Endpoints
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/tasks` | Fetch all tasks (supports query filtering) |
+| `POST` | `/api/tasks` | Create a new task |
+| `PUT` | `/api/tasks/:id` | Update an existing task |
+| `PATCH` | `/api/tasks/:id/status` | Toggle task status (Completed/Pending) |
+| `DELETE` | `/api/tasks/:id` | Delete a task |
 
 1. Clone the repo: `git clone https://github.com/lalit058/Taskflow.git`
 2. Install dependencies for both folders: `npm install`
