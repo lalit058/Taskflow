@@ -14,47 +14,39 @@ A modern, full-stack task management application built with react, Node.js, Expr
 <div align="center">
   <table border="0">
     <tr>
-      <td width="100%" align="center">
-        <b>Dashboard </b><br/><br/>
-        <img src="./frontend/src/assets/admin-dashboard.png" alt="Admin dashboard" width="100%">
+      <td width="100%" align="center" colspan="2">
+        <b>Dashboard</b><br/><br/>
+        <img src="./frontend/src/assets/admin-dashboard.png" alt="Admin Dashboard" width="100%">
       </td>
     </tr>
     <tr>
-    <td width="50%" align="center">
-        <b>Sign UP</b><br/><br/>
-        <img src="./frontend/src/assets/signup.png" alt="Task Modal" width="100%">
+      <td width="50%" align="center">
+        <b>Sign Up</b><br/><br/>
+        <img src="./frontend/src/assets/signup.png" alt="Sign Up" width="100%">
       </td>
       <td width="50%" align="center">
         <b>Sign In</b><br/><br/>
-        <img src="./frontend/src/assets/login.png" alt="Admin dashboard" width="100%">
+        <img src="./frontend/src/assets/login.png" alt="Sign In" width="100%">
       </td>
     </tr>
     <tr>
       <td width="50%" align="center">
         <b>User 1</b><br/><br/>
-        <img src="./frontend/src/assets/user1.png" alt="Task Modal" width="100%">
+        <img src="./frontend/src/assets/user1.png" alt="User 1" width="100%">
       </td>
       <td width="50%" align="center">
         <b>User 2</b><br/><br/>
-        <img src="./frontend/src/assets/user2.png" alt="Task Modal" width="100%">
+        <img src="./frontend/src/assets/user2.png" alt="User 2" width="100%">
       </td>
     </tr>
-      <td width="50%" align="center">
-        <b>User 1</b><br/><br/>
-        <img src="./frontend/src/assets/user1.png" alt="Task Modal" width="100%">
-      </td>
-      <td width="50%" align="center">
-        <b>User 2</b><br/><br/>
-        <img src="./frontend/src/assets/user2.png" alt="Task Modal" width="100%">
-      </td>
-    </tr>
+    <tr>
       <td width="50%" align="center">
         <b>Add New Task</b><br/><br/>
-        <img src="./frontend/src/assets/new-task.png" alt="Task Modal" width="100%">
+        <img src="./frontend/src/assets/new-task.png" alt="Add New Task" width="100%">
       </td>
       <td width="50%" align="center">
         <b>Profile</b><br/><br/>
-        <img src="./frontend/src/assets/profile.png" alt="Task Modal" width="100%">
+        <img src="./frontend/src/assets/profile.png" alt="Profile" width="100%">
       </td>
     </tr>
   </table>
