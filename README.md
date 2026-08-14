@@ -4,7 +4,7 @@ A modern, full-stack task management application built with react, Node.js, Expr
 ## 🚀 Features
 - **Task Management**: Create, update, delete, and toggle completion states for tasks effortlessly.
 - **Smart Urgency Indicator**: Color-coded badges and animations alert you when tasks are approaching their due date or overdue:
-    -**🔴 Overdue**: Pulsing red alert
+    - **🔴 Overdue**: Pulsing red alert
     - **🟠 Due < 24 hrs**: High-priority orange warning
     - **🔵 Due < 3 days**: Blue notice
 
