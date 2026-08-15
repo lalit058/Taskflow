@@ -30,6 +30,7 @@ app.use(express.urlencoded({ limit: "10mb", extended: true }));
 // Socket.IO Setup
 const io = socketIO(server, {
   cors: corsOptions,
+  transports: ['websocket'],
 });
 
 connectDB();
