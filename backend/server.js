@@ -1,7 +1,6 @@
 const cors = require("cors");
 const express = require("express");
 const http = require("http");
-const socketIO = require("socket.io");
 const connectDB = require("./config/db");
 const authRoutes = require("./routes/auth");
 const taskRoutes = require("./routes/tasks");
@@ -27,15 +26,33 @@ app.use(cors(corsOptions));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
 
-// Socket.IO Setup
-const io = socketIO(server, {
-  cors: corsOptions,
-  transports: ['websocket'],
-});
+// Conditional Socket.IO Setup 
+let io = null;
+if (process.env.NODE_ENV !== "production") {
+  const socketIO = require("socket.io");
+  io = socketIO(server, {
+    cors: corsOptions,
+  });
+
+  io.on("connection", (socket) => {
+    socket.on("join", (data) => {
+      const { userId, role } = data;
+      if (!userId) return;
+      socket.join(userId.toString());
+      if (role === "admin") {
+        socket.join("admin-room");
+      }
+    });
+
+    socket.on("disconnect", () => {
+      console.log("User disconnected");
+    });
+  });
+}
 
 connectDB();
 
-// Set io for potential REST route access
+// Set io for potential REST route access 
 app.set("io", io);
 
 const PORT = process.env.PORT || 5000;
@@ -105,24 +122,6 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "OK", message: "Server is running" });
 });
 
-// Socket.io logic
-io.on("connection", (socket) => {
-  socket.on("join", (data) => {
-    const { userId, role } = data;
-
-    if (!userId) return;
-    socket.join(userId.toString());
-
-    if (role === "admin") {
-      socket.join("admin-room");
-    }
-  });
-
-  socket.on("disconnect", () => {
-    console.log("User disconnected");
-  });
-});
-
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
@@ -138,5 +137,5 @@ if (process.env.NODE_ENV !== "production") {
   });
 }
 
-// Export the app instance for Vercel functions
+// Export the server instance for Vercel functions
 module.exports = server;
