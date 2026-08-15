@@ -18,8 +18,7 @@ const UPDATE_PROFILE = gql`
 `;
 
 // API Service
-const API_URL = import.meta.env.VITE_API_URL || "/api";
-
+const API_URL = import.meta.env.VITE_API_URL || "https://taskflow-j3wuaklhb-lalit058s-projects.vercel.app/api";
 const api = {
   async register(data) {
     const res = await fetch(`${API_URL}/auth/register`, {
