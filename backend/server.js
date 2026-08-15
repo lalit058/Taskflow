@@ -127,25 +127,13 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Something went wrong!' });
 });
 
-// Start the server
-startApolloServer().then(() => {
+// Server Initialization
+startApolloServer();
+
+if (process.env.NODE_ENV !== 'production') {
   server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
   });
-});
-
-const PORT = process.env.PORT || 5000;
-
-// Only listen locally if not running on Vercel serverless
-if (process.env.NODE_ENV !== 'production') {
-  startApolloServer().then(() => {
-    server.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-    });
-  });
-} else {
-  // Initialize Apollo server for production serverless usage
-  startApolloServer();
 }
 
 // Export the app instance for Vercel functions
