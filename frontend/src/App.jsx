@@ -40,7 +40,7 @@ const UPDATE_PROFILE = gql`
 const socket = io(import.meta.env.VITE_API_URL || "http://localhost:5000");
 
 // API Service
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 const api = {
   async register(data) {
     const res = await fetch(`${API_URL}/auth/register`, {
@@ -147,7 +147,7 @@ export default function App() {
     },
     onError: (err) => {
       console.error("Failed to fetch current user profile:", err);
-    }
+    },
   });
 
   // Setup Socket.io listener for real-time profile adjustments by admin
@@ -157,8 +157,10 @@ export default function App() {
       socket.emit("join", { userId, role: user.role });
 
       socket.on("profileUpdated", (data) => {
-        toast.success(data.message || "Your profile was updated by an admin!", { icon: "👤" });
-        
+        toast.success(data.message || "Your profile was updated by an admin!", {
+          icon: "👤",
+        });
+
         setUser((prevUser) => {
           const refreshedUser = { ...prevUser, ...data.updatedData };
           sessionStorage.setItem("user", JSON.stringify(refreshedUser));
