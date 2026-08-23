@@ -6,11 +6,13 @@ import './index.css'
 import { ApolloClient, InMemoryCache, ApolloProvider, createHttpLink } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
 
+// Dynamically use Render URL in production and localhost during development
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 // Setup connection to the GraphQL server
 const httpLink = createHttpLink({
-  uri: 'http://localhost:5000/graphql',
+  uri: `${API_URL}/graphql`,
 });
-
 
 const authLink = setContext((_, { headers }) => {
   // Pulls the token that is saved during login
@@ -28,9 +30,9 @@ const client = new ApolloClient({
   cache: new InMemoryCache(), // This optimizes performance by caching data
 });
 
-ReactDOM.createRoot(document.getElementById('root')).render(
+ReactDOM.createRoot(getElementById('root')).render(
   <React.StrictMode>
-    <ApolloProvider client={ client }>
+    <ApolloProvider client={client}>
       <App />
     </ApolloProvider>
   </React.StrictMode>,
