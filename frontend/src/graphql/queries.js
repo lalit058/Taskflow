@@ -12,6 +12,32 @@ export const Update_Profile = gql`
   }
 `;
 
+export const UPDATE_USER_MUTATION = gql`
+  mutation UpdateUser(
+    $id: ID!
+    $name: String
+    $email: String
+    $role: String
+    $avatar: String
+  ) {
+    updateUser(
+      id: $id
+      name: $name
+      email: $email
+      role: $role
+      avatar: $avatar
+    ) {
+      id
+      name
+      email
+      role
+      avatar
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
 export const Get_Tasks = gql`
   query GetTasks($status: String) {
     getTasks(status: $status) {

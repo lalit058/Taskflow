@@ -1,8 +1,25 @@
-import React, { useState } from "react";
-import { useMutation, gql } from "@apollo/client";
+import React, { useState, useEffect } from "react";
+import { useMutation, useQuery, gql } from "@apollo/client";
+import { io } from "socket.io-client";
+import toast, { Toaster } from "react-hot-toast";
 import LoginForm from "./components/LoginForm";
 import Navbar from "./components/Navbar";
 import Dashboard from "./components/Dashboard";
+
+// Define GraphQL Query to fetch current user profile with timestamps
+const GET_ME = gql`
+  query GetMe {
+    getMe {
+      id
+      name
+      email
+      role
+      avatar
+      createdAt
+      updatedAt
+    }
+  }
+`;
 
 // Define GraphQL mutation
 const UPDATE_PROFILE = gql`
@@ -13,12 +30,17 @@ const UPDATE_PROFILE = gql`
       email
       avatar
       role
+      createdAt
+      updatedAt
     }
   }
 `;
 
+// Initialize socket connection
+const socket = io(import.meta.env.VITE_API_URL || "http://localhost:5000");
+
 // API Service
-const API_URL = import.meta.env.VITE_API_URL || "https://taskflow-j3wuaklhb-lalit058s-projects.vercel.app/api";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 const api = {
   async register(data) {
     const res = await fetch(`${API_URL}/auth/register`, {
@@ -113,10 +135,46 @@ export default function App() {
     JSON.parse(sessionStorage.getItem("user") || "null"),
   );
 
-  // Define the mutation hoook
+  // Automatically fetch fresh user details including timestamps using getMe query
+  useQuery(GET_ME, {
+    skip: !token,
+    fetchPolicy: "network-only",
+    onCompleted: (data) => {
+      if (data && data.getMe) {
+        setUser(data.getMe);
+        sessionStorage.setItem("user", JSON.stringify(data.getMe));
+      }
+    },
+    onError: (err) => {
+      console.error("Failed to fetch current user profile:", err);
+    }
+  });
+
+  // Setup Socket.io listener for real-time profile adjustments by admin
+  useEffect(() => {
+    const userId = user?.id || user?._id;
+    if (userId) {
+      socket.emit("join", { userId, role: user.role });
+
+      socket.on("profileUpdated", (data) => {
+        toast.success(data.message || "Your profile was updated by an admin!", { icon: "👤" });
+        
+        setUser((prevUser) => {
+          const refreshedUser = { ...prevUser, ...data.updatedData };
+          sessionStorage.setItem("user", JSON.stringify(refreshedUser));
+          return refreshedUser;
+        });
+      });
+    }
+
+    return () => {
+      socket.off("profileUpdated");
+    };
+  }, [user?.id, user?._id]);
+
+  // Define the mutation hook
   const [updateProfileMutation] = useMutation(UPDATE_PROFILE, {
     onCompleted: (data) => {
-      // Clean update without logging the huge base64 avatar string
       const updatedUser = { ...user, ...data.updateProfile };
       sessionStorage.setItem("user", JSON.stringify(updatedUser));
       setUser(updatedUser);
@@ -126,7 +184,6 @@ export default function App() {
     },
   });
 
-  // Define the hook 
   const handleUpdateUser = async (updatedData) => {
     try {
       await updateProfileMutation({
@@ -158,11 +215,14 @@ export default function App() {
   }
 
   return (
-    <Dashboard
-      user={user}
-      token={token}
-      onLogout={handleLogout}
-      onUpdateUser={handleUpdateUser}
-    />
+    <>
+      <Toaster position="top-center" />
+      <Dashboard
+        user={user}
+        token={token}
+        onLogout={handleLogout}
+        onUpdateUser={handleUpdateUser}
+      />
+    </>
   );
 }

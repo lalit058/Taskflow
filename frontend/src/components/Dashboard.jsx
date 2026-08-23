@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import toast, { Toaster } from "react-hot-toast";
-import { useQuery, useMutation } from "@apollo/client";
+import { useQuery, useMutation, gql } from "@apollo/client";
 import { io } from "socket.io-client";
 import {
   Plus,
@@ -9,18 +9,71 @@ import {
   List,
   AlertCircle,
   Search,
+  Users,
+  ShieldCheck,
+  X,
 } from "lucide-react";
 import {
   Get_Tasks,
   Create_Task,
-  Update_Task,
   Delete_Task,
 } from "../graphql/queries";
 import TaskCard from "./TaskCard";
 import TaskForm from "./TaskForm";
 import Navbar from "./Navbar";
 import ProfileModal from "./ProfileModal";
+import AdminUserList, { GET_ALL_USERS } from "./AdminUserList";
 import Footer from "./Footer";
+
+// Define Update Task Mutation matching backend schema explicitly
+const UPDATE_TASK = gql`
+  mutation UpdateTask(
+    $id: ID!
+    $title: String
+    $description: String
+    $status: String
+    $priority: String
+    $dueDate: String
+  ) {
+    updateTask(
+      id: $id
+      title: $title
+      description: $description
+      status: $status
+      priority: $priority
+      dueDate: $dueDate
+    ) {
+      id
+      title
+      description
+      status
+      priority
+      dueDate
+      createdAt
+      updatedAt
+      user {
+        id
+        name
+        email
+        role
+        avatar
+      }
+    }
+  }
+`;
+
+// Define Update User Mutation matching backend schema
+const UPDATE_USER_MUTATION = gql`
+  mutation UpdateUser($id: ID!, $name: String, $email: String, $role: String, $avatar: String) {
+    updateUser(id: $id, name: $name, email: $email, role: $role, avatar: $avatar) {
+      id
+      name
+      email
+      role
+      avatar
+    }
+  }
+`;
 
 // Initialize socket
 const socket = io(import.meta.env.VITE_API_URL || "http://localhost:5000");
@@ -39,12 +92,18 @@ const toastStyle = {
 
 const Dashboard = ({ user, token, onLogout, onUpdateUser }) => {
   const [showProfile, setShowProfile] = useState(false);
+  const [showAdminUsersModal, setShowAdminUsersModal] = useState(false);
+  const [selectedAdminUser, setSelectedAdminUser] = useState(null);
+  
+  // Added state to force re-mounting and refreshing of the AdminUserList component
+  const [userListRefreshKey, setUserListRefreshKey] = useState(0);
 
   // Queries and Mutations
   const { loading, error, data, refetch } = useQuery(Get_Tasks);
   const [createTask, { loading: creating }] = useMutation(Create_Task);
-  const [updateTask, { loading: updating }] = useMutation(Update_Task);
+  const [updateTask, { loading: updating }] = useMutation(UPDATE_TASK);
   const [deleteTask, { loading: deleting }] = useMutation(Delete_Task);
+  const [updateUser] = useMutation(UPDATE_USER_MUTATION);
 
   // Local State
   const [searchTerm, setSearchTerm] = useState("");
@@ -310,7 +369,7 @@ const Dashboard = ({ user, token, onLogout, onUpdateUser }) => {
         onOpenProfile={() => setShowProfile(true)}
       />
 
-      {/* Profile Modal */}
+      {/* Profile Modal (Logged in user) */}
       {showProfile && (
         <ProfileModal
           user={user}
@@ -319,7 +378,103 @@ const Dashboard = ({ user, token, onLogout, onUpdateUser }) => {
         />
       )}
 
-      <main className="mx-auto p-6">
+      {/* Profile Modal for Selected User from Directory (Admin) */}
+      {selectedAdminUser && (
+        <ProfileModal
+          user={selectedAdminUser}
+          onClose={() => setSelectedAdminUser(null)}
+          onUpdateProfile={async (updatedData) => {
+            try {
+              const targetId = selectedAdminUser.id || selectedAdminUser._id;
+              
+              await updateUser({
+                variables: {
+                  id: targetId,
+                  name: updatedData.name,
+                  email: updatedData.email,
+                  role: updatedData.role,
+                  avatar: updatedData.avatar,
+                },
+                refetchQueries: [{ query: GET_ALL_USERS }],
+                awaitRefetchQueries: true,
+              });
+
+              socket.emit("adminProfileUpdate", {
+                userId: targetId,
+                updatedData: updatedData,
+                adminName: user?.name || "An administrator",
+                message: `An administrator (${user?.name || "Admin"}) has updated your profile details.`
+              });
+
+              // Increment key to force AdminUserList to remount and fetch fresh data
+              setUserListRefreshKey((prev) => prev + 1);
+
+              toast.success(`Profile updated successfully for ${updatedData.name || selectedAdminUser.name}`);
+              setSelectedAdminUser(null);
+            } catch (err) {
+              toast.error(`Failed to update profile: ${err.message}`);
+            }
+          }}
+        />
+      )}
+
+      {/* Admin User Management Modal */}
+      {showAdminUsersModal && user?.role === "admin" && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="bg-white w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden border border-gray-100 flex flex-col max-h-[90vh]">
+            <div className="bg-gradient-to-r from-purple-900 to-indigo-900 text-white p-6 flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="p-2.5 bg-white/10 rounded-xl">
+                  <Users size={24} className="text-purple-200" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black">User Directory</h3>
+                  <p className="text-xs text-purple-200">
+                    Manage and oversee all system registered accounts
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowAdminUsersModal(false)}
+                className="p-2 hover:bg-white/10 rounded-full transition-colors text-purple-200 hover:text-white"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto bg-gray-50/50">
+              <AdminUserList 
+                key={userListRefreshKey}
+                onSelectUser={(selectedUser) => setSelectedAdminUser(selectedUser)} 
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      <main className="mx-auto p-6 max-w-7xl">
+        {/* Admin Control Bar */}
+        {user?.role === "admin" && (
+          <div className="mb-8 bg-gradient-to-r from-purple-900 via-purple-800 to-indigo-900 text-white p-5 rounded-2xl shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center space-x-4">
+              <div className="p-3 bg-white/10 rounded-xl backdrop-blur-md">
+                <ShieldCheck size={28} className="text-purple-300" />
+              </div>
+              <div>
+                <h4 className="font-extrabold text-lg">Admin Control Center</h4>
+                <p className="text-xs text-purple-200">
+                  You are logged in with administrative privileges.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowAdminUsersModal(true)}
+              className="bg-white text-purple-900 px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-purple-50 transition shadow-lg active:scale-95"
+            >
+              <Users size={18} /> View All Users List
+            </button>
+          </div>
+        )}
+
         {/* Stats Section */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {[

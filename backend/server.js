@@ -26,33 +26,41 @@ app.use(cors(corsOptions));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
 
-// Conditional Socket.IO Setup 
-let io = null;
-if (process.env.NODE_ENV !== "production") {
-  const socketIO = require("socket.io");
-  io = socketIO(server, {
-    cors: corsOptions,
+// Socket.IO Setup
+const socketIO = require("socket.io");
+const io = socketIO(server, {
+  cors: corsOptions,
+});
+
+io.on("connection", (socket) => {
+  socket.on("join", (data) => {
+    const { userId, role } = data;
+    if (!userId) return;
+    socket.join(userId.toString());
+    if (role === "admin") {
+      socket.join("admin-room");
+    }
   });
 
-  io.on("connection", (socket) => {
-    socket.on("join", (data) => {
-      const { userId, role } = data;
-      if (!userId) return;
-      socket.join(userId.toString());
-      if (role === "admin") {
-        socket.join("admin-room");
-      }
-    });
-
-    socket.on("disconnect", () => {
-      console.log("User disconnected");
-    });
+  // Listen for admin profile modifications and relay to the targeted user
+  socket.on("adminProfileUpdate", (data) => {
+    const { userId, updatedData, message } = data;
+    if (userId) {
+      socket.to(userId.toString()).emit("profileUpdated", {
+        updatedData,
+        message,
+      });
+    }
   });
-}
+
+  socket.on("disconnect", () => {
+    // User disconnected
+  });
+});
 
 connectDB();
 
-// Set io for potential REST route access 
+// Set io for potential REST route access
 app.set("io", io);
 
 const PORT = process.env.PORT || 5000;
@@ -131,11 +139,9 @@ app.use((err, req, res, next) => {
 // Server Initialization
 startApolloServer();
 
-if (process.env.NODE_ENV !== "production") {
-  server.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-  });
-}
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
 
 // Export the server instance for Vercel functions
 module.exports = server;

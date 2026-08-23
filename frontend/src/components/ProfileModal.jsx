@@ -5,6 +5,7 @@ import {
   Mail,
   Shield,
   Calendar,
+  Clock,
   Edit2,
   Check,
   Camera,
@@ -19,6 +20,18 @@ const ProfileModal = ({ user, onClose, onUpdateProfile }) => {
     role: user?.role || "User",
     avatar: user?.avatar || "", // Base64 string or image URL
   });
+
+  // Safe date formatting helper to prevent "Invalid Date" crashes
+  const formatDate = (dateInput) => {
+    if (!dateInput) return "N/A";
+    
+    // Handle MongoDB ObjectIDs or numeric timestamps if passed
+    const date = typeof dateInput === "number" || /^\d+$/.test(dateInput) 
+      ? new Date(Number(dateInput)) 
+      : new Date(dateInput);
+
+    return isNaN(date.getTime()) ? "N/A" : date.toLocaleString();
+  };
 
   const handleChange = (e) => {
     setFormData({
@@ -82,6 +95,7 @@ const ProfileModal = ({ user, onClose, onUpdateProfile }) => {
   };
 
   const currentAvatar = isEditing ? formData.avatar : user?.avatar;
+  const updatedAtValue = user?.updatedAt || user?.updated_at;
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -263,10 +277,24 @@ const ProfileModal = ({ user, onClose, onUpdateProfile }) => {
                   <Calendar size={18} className="text-gray-400 shrink-0" />
                   <div>
                     <p className="text-xs text-gray-400 font-medium uppercase">
-                      Joined
+                      Created At
                     </p>
                     <p className="font-medium text-gray-800">
-                      {new Date(user.createdAt).toLocaleDateString()}
+                      {formatDate(user.createdAt)}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {updatedAtValue && (
+                <div className="flex items-center gap-3 text-sm">
+                  <Clock size={18} className="text-gray-400 shrink-0" />
+                  <div>
+                    <p className="text-xs text-gray-400 font-medium uppercase">
+                      Last Updated At
+                    </p>
+                    <p className="font-medium text-gray-800">
+                      {formatDate(updatedAtValue)}
                     </p>
                   </div>
                 </div>

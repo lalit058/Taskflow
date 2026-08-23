@@ -48,7 +48,9 @@ router.post('/register', async (req, res) => {
                 name: user.name, 
                 email: user.email, 
                 role: user.role,
-                avatar: user.avatar 
+                avatar: user.avatar,
+                createdAt: user.createdAt,
+                updatedAt: user.updatedAt
             }
         });
     } catch (error) {
@@ -94,7 +96,9 @@ router.post('/login', async (req, res) => {
                 name: user.name, 
                 email: user.email, 
                 role: user.role,
-                avatar: user.avatar 
+                avatar: user.avatar,
+                createdAt: user.createdAt, 
+                updatedAt: user.updatedAt
             }
         });
     } catch (error) {

@@ -1,4 +1,4 @@
-const { gql } = require('graphql-tag');
+const { gql } = require("graphql-tag");
 
 const typeDefs = gql`
   type User {
@@ -18,22 +18,30 @@ const typeDefs = gql`
     status: String!
     priority: String!
     dueDate: String
-    user: User  
+    user: User
     createdAt: String
     updatedAt: String
   }
 
   type Query {
-    # Fetch tasks 
+    # Get current logged-in user profile
+    getMe: User
+    # Fetch tasks
     getTasks(status: String): [Task!]!
     # Get a single task by ID
     getTask(id: ID!): Task
+    # Get all users (Admin only)
+    getAllUsers: [User!]!
   }
 
   type Mutation {
-  updateProfile(
+    updateProfile(name: String, email: String, avatar: String): User!
+
+    updateUser(
+      id: ID!
       name: String
       email: String
+      role: String
       avatar: String
     ): User!
 

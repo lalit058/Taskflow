@@ -96,7 +96,7 @@ const LoginForm = ({
             <>
               {/* Profile Avatar Upload */}
               <div className="flex items-center space-x-4 p-2 bg-gray-50 rounded-xl border border-gray-100">
-                <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 flex-shrink-0 flex items-center justify-center border border-gray-300">
+                <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 shrink-0 flex items-center justify-center border border-gray-300">
                   {formData.avatar ? (
                     <img
                       src={formData.avatar}
