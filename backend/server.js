@@ -10,10 +10,32 @@ require("dotenv").config();
 const app = express();
 const server = http.createServer(app);
 
-const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+// Allowed origins configuration (safe for local development and live deployment)
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  process.env.CLIENT_URL,
+  process.env.CLIENT_URL ? process.env.CLIENT_URL.replace(/\/$/, "") : null,
+].filter(Boolean); // Filters out any null/undefined values
 
 const corsOptions = {
-  origin: [clientUrl, "http://127.0.0.1:5173"],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, Postman, or server-to-server)
+    if (!origin) return callback(null, true);
+
+    // Normalize incoming origin by stripping trailing slash if present
+    const normalizedOrigin = origin.replace(/\/$/, "");
+    
+    const isAllowed = allowedOrigins.some(
+      (allowed) => allowed && allowed.replace(/\/$/, "") === normalizedOrigin
+    );
+
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS policy violation: Origin ${origin} not allowed.`));
+    }
+  },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
