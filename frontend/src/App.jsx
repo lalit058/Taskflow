@@ -43,7 +43,7 @@ const socket = io(import.meta.env.VITE_API_URL || "http://localhost:5000");
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 const api = {
   async register(data) {
-    const res = await fetch(`${API_URL}/auth/register`, {
+    const res = await fetch(`${API_URL}/api/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -52,7 +52,7 @@ const api = {
   },
 
   async login(data) {
-    const res = await fetch(`${API_URL}/auth/login`, {
+    const res = await fetch(`${API_URL}/api/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
