@@ -78,18 +78,6 @@ const UPDATE_USER_MUTATION = gql`
 // Initialize socket
 const socket = io(import.meta.env.VITE_API_URL || "http://localhost:5000");
 
-const toastStyle = {
-  all: "unset",
-  display: "flex",
-  alignItems: "center",
-  gap: "5px",
-  top: "5px",
-  color: "#000000",
-  fontWeight: "700",
-  padding: "16px",
-  pointerEvents: "auto",
-};
-
 const Dashboard = ({ user, token, onLogout, onUpdateUser }) => {
   const [showProfile, setShowProfile] = useState(false);
   const [showAdminUsersModal, setShowAdminUsersModal] = useState(false);
@@ -350,9 +338,13 @@ const Dashboard = ({ user, token, onLogout, onUpdateUser }) => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Toaster
+        position="top-center"
         reverseOrder={false}
+        gutter={8}
+        containerStyle={{
+          top: 20,
+        }}
         toastOptions={{
-          style: { ...toastStyle },
           success: {
             iconTheme: { primary: "#04a640", secondary: "#fff" },
           },
@@ -378,7 +370,40 @@ const Dashboard = ({ user, token, onLogout, onUpdateUser }) => {
         />
       )}
 
-      {/* Profile Modal for Selected User from Directory (Admin) */}
+      {/* Admin User Management Modal */}
+      {showAdminUsersModal && user?.role === "admin" && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="bg-white w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden border border-gray-100 flex flex-col max-h-[90vh]">
+            <div className="bg-gradient-to-r from-purple-900 to-indigo-900 text-white p-6 flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="p-2.5 bg-white/10 rounded-xl">
+                  <Users size={24} className="text-purple-200" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black">User Directory</h3>
+                  <p className="text-xs text-purple-200">
+                    Manage and oversee all system registered accounts
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowAdminUsersModal(false)}
+                className="p-2 hover:bg-white/10 rounded-full transition-colors text-purple-200 hover:text-white"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto bg-gray-50/50">
+              <AdminUserList 
+                key={userListRefreshKey}
+                onSelectUser={(selectedUser) => setSelectedAdminUser(selectedUser)} 
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Profile Modal for Selected User from Directory (Admin) - Moved BELOW directory modal to render on top */}
       {selectedAdminUser && (
         <ProfileModal
           user={selectedAdminUser}
@@ -416,39 +441,6 @@ const Dashboard = ({ user, token, onLogout, onUpdateUser }) => {
             }
           }}
         />
-      )}
-
-      {/* Admin User Management Modal */}
-      {showAdminUsersModal && user?.role === "admin" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="bg-white w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden border border-gray-100 flex flex-col max-h-[90vh]">
-            <div className="bg-gradient-to-r from-purple-900 to-indigo-900 text-white p-6 flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="p-2.5 bg-white/10 rounded-xl">
-                  <Users size={24} className="text-purple-200" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-black">User Directory</h3>
-                  <p className="text-xs text-purple-200">
-                    Manage and oversee all system registered accounts
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowAdminUsersModal(false)}
-                className="p-2 hover:bg-white/10 rounded-full transition-colors text-purple-200 hover:text-white"
-              >
-                <X size={20} />
-              </button>
-            </div>
-            <div className="p-6 overflow-y-auto bg-gray-50/50">
-              <AdminUserList 
-                key={userListRefreshKey}
-                onSelectUser={(selectedUser) => setSelectedAdminUser(selectedUser)} 
-              />
-            </div>
-          </div>
-        </div>
       )}
 
       <main className="mx-auto p-6 max-w-7xl">
